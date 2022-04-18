@@ -1,0 +1,47 @@
+.adm-popup-body {
+  padding-bottom: 8px;
+  .adm-tabs-content {
+    padding: 0;
+  }
+  .adm-popup-header-wrapper {
+    position: relative;
+    .adm-popup-header-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 18px;
+    }
+    .adm-popup-header {
+      display: flex;
+      justify-content: center;
+      padding: 8px;
+      .adm-popup-header-title {
+        font-weight: 500;
+        font-size: 18px;
+        text-align: center;
+      }
+    }
+  }
+  .adm-popup-body-wrapper {
+    display: flex;
+    height: 100%;
+    .adm-popup-body-left {
+      flex: 0 0 100px;
+      padding: 4px 8px;
+      max-height: calc(100% - 80px);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .adm-popup-body-right {
+      padding: 4px 8px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100% - 80px);
+      overflow-y: auto;
+    }
+  }
+  .adm-tabs-tab {
+    font-size: 16px;
+  }
+}
