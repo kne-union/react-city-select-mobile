@@ -11,7 +11,8 @@ import {
     Divider,
     Selector,
     Button,
-    Toast
+    Toast,
+    Grid
 } from 'antd-mobile';
 import {apis as _apis} from './preset';
 import {CloseOutline} from 'antd-mobile-icons';
@@ -122,8 +123,8 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                 {tabList.map((item) => <Tabs.Tab title={item.tab} key={item.key}> </Tabs.Tab>)}
             </Tabs>
         </div>
-        <div className="adm-popup-body-wrapper">
-            <div className="adm-popup-body-left">
+        <Grid columns={3} gap={8} className="adm-popup-body-wrapper">
+            <Grid.Item span={1} className="adm-popup-body-left">
                 <RemoteData loader={currentItem.loader} onLoad={(data) => {
                     data && data.length && setActiveKey(data[0].id);
                 }}>{(data) => {
@@ -133,8 +134,8 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                         {data.map((item) => <SideBar.Item key={item.id} title={item.name}></SideBar.Item>)}
                     </SideBar>;
                 }}</RemoteData>
-            </div>
-            <div className="adm-popup-body-right">
+            </Grid.Item>
+            <Grid.Item span={2} className="adm-popup-body-right">
                 <div style={{flex: 1}}>
                     <Space direction="vertical" style={{width: '100%'}}>
                         {activeKey ? <>
@@ -146,7 +147,8 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                                 return <Space wrap>
                                     {data.map(({code, name}) => {
                                         const _value = cities.indexOf(code) > -1 ? [code] : [];
-                                        return <Selector key={code} value={_value} options={[{label: name, value: code}]}
+                                        return <Selector key={code} value={_value}
+                                                         options={[{label: name, value: code}]}
                                                          onChange={(value) => {
                                                              const checked = value.length > 0;
                                                              if (checked) {
@@ -172,7 +174,7 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                         <Space wrap>
                             {cities.map((id) => {
                                 return <DisplayCity key={id} id={id}>{(data) => {
-                                    return <Tag>
+                                    return <Tag color='primary'>
                                         <Space>
                                             <span>{data.parent ? `${data.parent.name}·${data.city.name}` : data.city.name}</span>
                                             {size > 1 && <span onClick={(event) => {
@@ -192,9 +194,9 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                         }}>确认</Button>
                     </div> : null}
                 </div>
-            </div>
-        </div>
-    </Popup>;
+            </Grid.Item>
+        </Grid>
+    </Popup>
 };
 
 CitySelect.defaultProps = {
