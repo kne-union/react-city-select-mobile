@@ -1,6 +1,6 @@
 {
   "name": "@kne/react-city-select-mobile",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "城市选择器",
   "main": "dist/index.js",
   "module": "dist/index.modern.js",

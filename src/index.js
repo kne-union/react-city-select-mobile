@@ -100,13 +100,23 @@ export const DisplayCity = ({id, children}) => {
     return <RemoteData loader={apis.getCity} options={id}>{children}</RemoteData>
 };
 
+const DisplayCityCount = ({id, name, cities, activeKey}) => {
+    return <Space>
+        <span>{name}</span>
+        <RemoteData loader={apis.getList} options={id}>{(data) => {
+            const activeLength = (data || []).filter(x => cities.indexOf(x.code) > -1).length;
+            return activeLength > 0 ? <span>({activeLength})</span> : '';
+        }}</RemoteData>
+    </Space>
+}
+
 export {default as preset} from './preset';
 
 const tabList = [{key: 'china', tab: '国内', loader: apis.getChinaCities}, {
     key: 'foreign', tab: '海外', loader: apis.getCountries
 }];
 
-const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) => {
+const CitySelect = ({title, size, showSelectRender, defaultValue, onChange, onClose, ...props}) => {
     const selectDomRef = useRef();
     const [cityHeight, setCityHeight] = useState(0);
     const [cities, setCities] = useState(defaultValue);
@@ -142,12 +152,14 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
         return tabList.find(x => x.key === currentTab);
     }, [currentTab]);
     useEffect(() => {
-        setTimeout(() => {
-            const dom = selectDomRef.current;
-            const _height = dom ? dom.clientHeight : 0;
-            setCityHeight(_height);
-        }, 200);
-    }, [cities])
+        if (showSelectRender) {
+            setTimeout(() => {
+                const dom = selectDomRef.current;
+                const _height = dom ? dom.clientHeight : 0;
+                setCityHeight(_height);
+            }, 200);
+        }
+    }, [cities, showSelectRender])
     return <Popup bodyStyle={{height: '100%'}} {...props}>
         <div className="adm-popup-header-wrapper">
             <span className="adm-popup-header-sure" onClick={(event) => {
@@ -167,13 +179,13 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                 取消
             </span>
         </div>
-        <div className="adm-popup-selects" ref={selectDomRef}>
+        {showSelectRender && <div className="adm-popup-selects" ref={selectDomRef}>
             <div offset={1} style={{
                 whiteSpace: 'nowrap'
             }}>已选{size > 1 ? <>（{cities.length}/{size}）</> : null}：
             </div>
             <div flex={1} style={{
-                maxHeight: '70px', overflowY: 'auto', padding: '4px 0'
+                padding: '4px 0'
             }}>
                 <Space wrap>
                     {cities.map((id) => {
@@ -192,7 +204,7 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                     })}
                 </Space>
             </div>
-        </div>
+        </div>}
         <div className="adm-popup-body-tabs">
             <Tabs activeKey={currentTab} onChange={(key) => {
                 setCurrentTab(key);
@@ -208,7 +220,7 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                     return <SideBar activeKey={activeKey} onChange={(item) => {
                         setActiveKey(item);
                     }}>
-                        {data.map((item) => <SideBar.Item key={item.id} title={item.name}></SideBar.Item>)}
+                        {data.map((item) => <SideBar.Item key={item.id} title={<DisplayCityCount id={item.id} cities={cities} name={item.name} />}></SideBar.Item>)}
                     </SideBar>;
                 }}</RemoteData>
             </Grid.Item>
@@ -246,7 +258,7 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
 };
 
 CitySelect.defaultProps = {
-    title: "请选择城市", size: 1, defaultValue: [], onChange: () => {
+    title: "请选择城市", size: 1, showSelectRender: false, defaultValue: [], onChange: () => {
     }
 };
 
