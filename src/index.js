@@ -12,10 +12,12 @@ import {
     Selector,
     Button,
     Toast,
-    Grid
+    Grid,
+    SearchBar,
+    List
 } from 'antd-mobile';
 import {apis as _apis} from './preset';
-import {CloseOutline} from 'antd-mobile-icons';
+import {CloseOutline, LeftOutline} from 'antd-mobile-icons';
 import './index.scss';
 
 export const RemoteData = ({loader, options, onLoad, children}) => {
@@ -41,24 +43,56 @@ export const RemoteData = ({loader, options, onLoad, children}) => {
     return children(data)
 };
 
-// const SearchInput = ({onChange}) => {
-//     const [value, setValue] = useState(null);
-//     const [data, setData] = useState([]);
-//     return <Select value={value} onChange={(value) => {
-//         onChange && onChange(value);
-//         setValue(null);
-//         setData([]);
-//     }} showSearch placeholder="搜索城市" style={{width: '250px'}}
-//                    defaultActiveFirstOption={false}
-//                    showArrow={false}
-//                    notFoundContent={null}
-//                    onSearch={(value) => {
-//                        return apis.searchCities(value).then((list) => {
-//                            setData(list);
-//                        });
-//                    }}
-//                    filterOption={false} options={data}/>
-// };
+const SearchInput = ({onChange}) => {
+    const [value, setValue] = useState(null);
+    const [data, setData] = useState([]);
+    const [visible, setVisible] = useState(false);
+    return <div>
+        <SearchBar className="adm-search-bar-readonly" readonly placeholder='搜索城市' onFocus={() => {
+            setVisible(true);
+        }}/>
+        {visible && <div className="adm-action-search-wrapper">
+            <div className="adm-action-search-body">
+                <div className="adm-action-search-action">
+                    <div className="adm-action-search-back" onClick={() => {
+                        setValue(null);
+                        setData([]);
+                        setVisible(false);
+                    }}>
+                        <LeftOutline/>
+                    </div>
+                    <div style={{flex: '1'}}>
+                        <SearchBar placeholder='搜索城市' onChange={val => {
+                            setValue(val);
+                            apis.debounce((() => {
+                                apis.searchCities(val).then((list) => {
+                                    setData(list);
+                                });
+                            })(), 500);
+                        }}/>
+                    </div>
+                    <div className="action-button-primary" onClick={() => {
+                        apis.searchCities(value).then((list) => {
+                            setData(list);
+                        });
+                    }}>
+                        搜索
+                    </div>
+                </div>
+                {data && data.length > 0 && <List>
+                    {data.map((item, index) => (
+                        <List.Item clickable={false} key={item.value} onClick={(e) => {
+                            onChange && onChange(item.value);
+                            setValue(null);
+                            setData([]);
+                            setVisible(false);
+                        }}>{item.label}</List.Item>
+                    ))}
+                </List>}
+            </div>
+        </div>}
+    </div>
+};
 
 export const apis = _apis;
 
@@ -73,6 +107,8 @@ const tabList = [{key: 'china', tab: '国内', loader: apis.getChinaCities}, {
 }];
 
 const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) => {
+    const selectDomRef = useRef();
+    const [cityHeight, setCityHeight] = useState(0);
     const [cities, setCities] = useState(defaultValue);
     const [activeKey, setActiveKey] = useState(null);
     const [currentTab, setCurrentTab] = useState('china');
@@ -105,15 +141,56 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
     const currentItem = useMemo(() => {
         return tabList.find(x => x.key === currentTab);
     }, [currentTab]);
-    return <Popup bodyStyle={{height: '80%'}} {...props}>
+    useEffect(() => {
+        setTimeout(() => {
+            const dom = selectDomRef.current;
+            const _height = dom ? dom.clientHeight : 0;
+            setCityHeight(_height);
+        }, 200);
+    }, [cities])
+    return <Popup bodyStyle={{height: '100%'}} {...props}>
         <div className="adm-popup-header-wrapper">
+            <span className="adm-popup-header-sure" onClick={(event) => {
+                onClose && onClose();
+                onChange(cities);
+            }}>
+                确认
+            </span>
+            <div className="adm-popup-header">
+                <SearchInput onChange={(value) => {
+                    appendCity(value);
+                }}/>
+            </div>
             <span className="adm-popup-header-close" onClick={(event) => {
                 onClose && onClose();
             }}>
-                <CloseOutline/>
+                取消
             </span>
-            <div className="adm-popup-header">
-                <span className="adm-popup-header-title">{title}</span>
+        </div>
+        <div className="adm-popup-selects" ref={selectDomRef}>
+            <div offset={1} style={{
+                whiteSpace: 'nowrap'
+            }}>已选{size > 1 ? <>（{cities.length}/{size}）</> : null}：
+            </div>
+            <div flex={1} style={{
+                maxHeight: '70px', overflowY: 'auto', padding: '4px 0'
+            }}>
+                <Space wrap>
+                    {cities.map((id) => {
+                        return <DisplayCity key={id} id={id}>{(data) => {
+                            return <Tag color='primary'>
+                                <Space>
+                                    <span>{data.parent ? `${data.parent.name}·${data.city.name}` : data.city.name}</span>
+                                    {size > 1 && <span onClick={(event) => {
+                                        removeCity(id);
+                                    }}>
+                                        <CloseOutline/>
+                                    </span>}
+                                </Space>
+                            </Tag>;
+                        }}</DisplayCity>
+                    })}
+                </Space>
             </div>
         </div>
         <div className="adm-popup-body-tabs">
@@ -123,7 +200,7 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                 {tabList.map((item) => <Tabs.Tab title={item.tab} key={item.key}> </Tabs.Tab>)}
             </Tabs>
         </div>
-        <Grid columns={3} gap={8} className="adm-popup-body-wrapper">
+        <Grid columns={3} gap={8} className="adm-popup-body-wrapper" style={{height: `calc(100% - 56px - 40px - ${cityHeight}px)`}}>
             <Grid.Item span={1} className="adm-popup-body-left">
                 <RemoteData loader={currentItem.loader} onLoad={(data) => {
                     data && data.length && setActiveKey(data[0].id);
@@ -162,37 +239,6 @@ const CitySelect = ({title, size, defaultValue, onChange, onClose, ...props}) =>
                             }}</RemoteData></> : <Empty/>}
 
                     </Space>
-                </div>
-                <div className="adm-popup-selects">
-                    <div offset={1} style={{
-                        whiteSpace: 'nowrap'
-                    }}>已选{size > 1 ? <>（{cities.length}/{size}）</> : null}：
-                    </div>
-                    <div flex={1} style={{
-                        maxHeight: '70px', overflowY: 'auto', padding: '4px 0'
-                    }}>
-                        <Space wrap>
-                            {cities.map((id) => {
-                                return <DisplayCity key={id} id={id}>{(data) => {
-                                    return <Tag color='primary'>
-                                        <Space>
-                                            <span>{data.parent ? `${data.parent.name}·${data.city.name}` : data.city.name}</span>
-                                            {size > 1 && <span onClick={(event) => {
-                                                removeCity(id);
-                                            }}>
-                                            <CloseOutline/>
-                                        </span>}
-                                        </Space>
-                                    </Tag>;
-                                }}</DisplayCity>
-                            })}
-                        </Space>
-                    </div>
-                    {size > 1 ? <div>
-                        <Button color="primary" onClick={() => {
-                            onChange(cities);
-                        }}>确认</Button>
-                    </div> : null}
                 </div>
             </Grid.Item>
         </Grid>
