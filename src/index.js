@@ -162,21 +162,21 @@ const CitySelect = ({title, size, showSelectRender, defaultValue, onChange, onCl
     }, [cities, showSelectRender])
     return <Popup bodyStyle={{height: '100%'}} {...props}>
         <div className="adm-popup-header-wrapper">
-            <span className="adm-popup-header-sure" onClick={(event) => {
+            <span className="adm-popup-header-close" onClick={(event) => {
                 onClose && onClose();
-                onChange(cities);
             }}>
-                确认
+                取消
             </span>
             <div className="adm-popup-header">
                 <SearchInput onChange={(value) => {
                     appendCity(value);
                 }}/>
             </div>
-            <span className="adm-popup-header-close" onClick={(event) => {
+            <span className="adm-popup-header-sure" onClick={(event) => {
                 onClose && onClose();
+                onChange(cities);
             }}>
-                取消
+                确认
             </span>
         </div>
         {showSelectRender && <div className="adm-popup-selects" ref={selectDomRef}>
